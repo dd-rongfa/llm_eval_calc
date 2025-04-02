@@ -3,13 +3,17 @@ import json
 import asyncio
 import aiohttp
 from typing import List, Tuple
+import ollama
 
 ark_models_entrypoints= {
     'ds-r1-7b':"ep-20250218161643-vl25s",
     'ds-r1-7b_Batch':"ep-bi-20250401151011-nzp5d",
     'ds-r1-32b':"ep-20250218161612-h68p4",
+    'ds-r1-32b_Batch':"ep-bi-20250401145433-t26nc",
     'ds-v3': "ep-20250214165420-s2s6s",
+    'ds-v3_Batch':"ep-bi-20250401151053-tzcz4",
     'ds-r1': "ep-20250214165338-52bjm",
+    'ds-r1_Batch':"ep-bi-20250401151117-zwvf8",
     'doubao-lite':"ep-20241217204945-k7pmp",
     'doubao-pro':"ep-20241012144130-85pt2",
 }
@@ -17,6 +21,13 @@ ark_models_entrypoints= {
 ark_url = "https://api.ark.com/v1/chat/completions"
 apikey = "d0a38cca-7ef4-46ff-bda6-6433191af8eb"
 
+
+
+
+def llm_chat(prompt, model="qwen2.5:latest",temperature=0):
+    response = ollama.chat(model=model, messages=[{"role": "user", "content": prompt}],
+                           options={"temperature": temperature})
+    return response["message"]
 
 
 def ark_chat(question="你好,你是谁？",temperature=0.5,model="ds-r1-7b_Batch"):
@@ -72,10 +83,10 @@ async def ark_chat_async(question="你好,你是谁？", temperature=0, model="d
         "model": ark_models_entrypoints[model],
         "stream": False,
         "messages": [
-            {
-                "role": "system",
-                "content": "You are a helpful assistant."
-            },
+            # {
+            #     "role": "system",
+            #     "content": "You are a helpful assistant."
+            # },
             {
                 "role": "user",
                 "content": question
@@ -88,6 +99,11 @@ async def ark_chat_async(question="你好,你是谁？", temperature=0, model="d
     try:
         async with aiohttp.ClientSession(timeout=timeout_obj) as session:
             async with session.post(url, headers=headers, json=data) as response:
+                # If code is 500,sleep 60s and retry
+                if response.status == 500:
+                    print(f"Error: HTTP {response.status} sleep 60s and retry")
+                    await asyncio.sleep(60)
+                    return await ark_chat_async(question, temperature, model, timeout)
                 if response.status != 200:
                     print(f"Error: HTTP {response.status}")
                     return {'content': '', 'reasoning_content': ''}
@@ -131,7 +147,13 @@ async def main_async():
 
 if __name__ == "__main__":
     
-    print("\nRunning asynchronous batch processing:")
-    asyncio.run(main_async())  # test ok
+    # print("\nRunning asynchronous batch processing:")
+    # asyncio.run(main_async())  # test ok
+
+    #  test ollama
+    prompt = "666x333=?"
+    res = llm_chat(prompt, model="qwen2.5:32b",temperature=0.5)
+    print(res)
+
 
 
