@@ -41,9 +41,15 @@ def generate_add_no_carry_data_fixed_length(num_digits=4):
     data.append(a+b)
     return is_carry,data
 
+# 每次生成两个一位数，多个数拼接，然后生成指定长度
+# 1，对于无进位的，要求，两个数的sum <=9, 如果做首位数字， 1<=每个数字都要<=8
+# 2，对于只有一个进位的，是否可以在1的基础上，选一个数字，生成进位，同时检查只进位一次
+# 3，对于两个进位的，可以在1的基础上，选两个数字，生成进位，同时检查只进两个
+# 4，对于多个进位的，可以在1的基础上，选多个数字，生成进位，同时检查只进多个
 
 
-def generate_add_no_carry_data(num_samples,num_start,num_end):
+
+def generate_add_no_carry_data(num_samples,num_start,num_end,file_name):
     start_time = time.time()
     data_list = []
     for num_digits in range(num_start,num_end):
@@ -57,7 +63,6 @@ def generate_add_no_carry_data(num_samples,num_start,num_end):
     print(f"Time taken: {end_time - start_time} seconds")
     # // 写到csv
     import csv
-    file_name = f"add_no_carry_data_samples_{num_samples}_digits_{num_start}_{num_end}_random_seed_{random_seed}.csv"
     with open(file_name, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['num_digits', 'is_carry','num1', 'num2', 'sum'])
@@ -70,8 +75,12 @@ def generate_add_no_carry_data(num_samples,num_start,num_end):
 
 
 if __name__ == "__main__":
+    import os
     num_samples = 200
-    num_start = 2
-    num_end = 22
-    generate_add_no_carry_data(num_samples,num_start,num_end)
+    num_start = 1
+    num_end = 31
+    fdir = "./data/add_no_carry_data"
+    os.makedirs(fdir, exist_ok=True)
+    file_name = os.path.join(fdir, f"add_no_carry_samples_{num_samples}_digits_{num_start}_{num_end}.csv")
+    generate_add_no_carry_data(num_samples,num_start,num_end,file_name)
 

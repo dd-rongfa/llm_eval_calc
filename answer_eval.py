@@ -98,12 +98,14 @@ def eval_answer():
                 
 
 async def eval_answer_ark():
-    data_dir = "./data/ark_dsv3"
-    model = "ds-v3_Batch"
+    model = "ds-r1_Batch"
+    data_dir = "./data/dsr1_ark"
+    sample_dir = "./data/add_no_carry_data"
+    start_num_digits = 24
+    sample_file = os.path.join(sample_dir, "add_no_carry_samples_100_digits_1_30.csv")
     os.makedirs(data_dir, exist_ok=True)
-    sample_file = os.path.join("add_no_carry_data_samples_500_digits_1_22_random_seed_42.csv")
-    summary_file = os.path.join(data_dir, 'ark_dsv3_summary.csv')
-    result_file = os.path.join(data_dir, 'ark_dsv3_details.csv')
+    summary_file = os.path.join(data_dir, f'dsr1_ark_summary_startfrom{start_num_digits}.csv')
+    result_file = os.path.join(data_dir, f'dsr1_ark_details_startfrom{start_num_digits}.csv')
     header = ['num_digits', 'is_carry','num1', 'num2', 'sum','diff','correct','question','answer','reasoning','comment','parse_error','responese_error']
     summary_header = ['num_digits', 'total_count','correct%','calc error%','parse_error%','responese_error%','cost_time','token_input_count','token_output_count']
     write_result(header,result_file) 
@@ -113,6 +115,10 @@ async def eval_answer_ark():
     num_digits_list = df.iloc[:,0].unique()
     for num_digits in num_digits_list:
         if num_digits %2 != 0:
+            continue
+        if  num_digits < start_num_digits:   # 之前16位数已经测试过
+            continue
+        if num_digits not in [24,]:
             continue
         df_num_digits = df[df.iloc[:,0] == num_digits]
         calc_error_count = 0
@@ -133,7 +139,7 @@ async def eval_answer_ark():
         results = []
         batch_size = 100
         for i in range(0,len(questions),batch_size):
-            results.extend(await batch_ark_chat_async(questions[i:i+batch_size],model=model))
+            results.extend(await batch_ark_chat_async(questions[i:i+batch_size],model=model,timeout=3000))
 
         for index,result in enumerate(results):
             num_digits,is_carry,num1,num2,num_sum = df_num_digits.iloc[index]
