@@ -1,6 +1,6 @@
 # Python
 __pycache__/
-data/
+data_bk/
 *.py[cod]
 *$py.class
 *.so
@@ -26,6 +26,7 @@ venv/
 env/
 ENV/
 .env
+env.py
 
 # IDE
 .idea/

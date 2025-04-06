@@ -28,25 +28,14 @@ def generate_add_no_carry_data_fixed_length(num_digits=4):
     for i in range(1,num_digits):
         num_2.append(random.randint(0,9-num_1[i]))
     a,b = num_1[0],num_2[0]
-    is_carry = False
     for i in range(1,num_digits):
         a = a*10 + num_1[i]
         b = b*10 + num_2[i]
-        if num_1[i] + num_2[i] >= 10:
-            is_carry = True
     data.append(num_digits) 
-    data.append(1 if is_carry else 0)       
     data.append(a)
     data.append(b)
     data.append(a+b)
-    return is_carry,data
-
-# 每次生成两个一位数，多个数拼接，然后生成指定长度
-# 1，对于无进位的，要求，两个数的sum <=9, 如果做首位数字， 1<=每个数字都要<=8
-# 2，对于只有一个进位的，是否可以在1的基础上，选一个数字，生成进位，同时检查只进位一次
-# 3，对于两个进位的，可以在1的基础上，选两个数字，生成进位，同时检查只进两个
-# 4，对于多个进位的，可以在1的基础上，选多个数字，生成进位，同时检查只进多个
-
+    return data
 
 
 def generate_add_no_carry_data(num_samples,num_start,num_end,file_name):
@@ -54,33 +43,31 @@ def generate_add_no_carry_data(num_samples,num_start,num_end,file_name):
     data_list = []
     for num_digits in range(num_start,num_end):
         for i in range(num_samples):
-            is_carry,data = generate_add_no_carry_data_fixed_length(num_digits=num_digits)
-            if is_carry:
-                print(f"error data: {data} is carry ed")
-            else:   
-                data_list.append(data)
+            data = generate_add_no_carry_data_fixed_length(num_digits=num_digits)
+            question = f"列竖式计算表达式的值，计算结果放 \\boxed{{}} 中，例如结果为2, 写成 \\boxed{{2}}。表达式:{data[1]}+{data[2]}"
+            question_en = f"Perform vertical addition to calculate the value of the expression, place the result inside \\boxed{{}}. For example, if the result is 2, write it as \\boxed{{2}}. Expression: {data[1]} + {data[2]}"
+            data.append(question)
+            data.append(question_en)
+            data_list.append(data)
     end_time = time.time()
     print(f"Time taken: {end_time - start_time} seconds")
     # // 写到csv
     import csv
-    with open(file_name, 'w', newline='') as csvfile:
+    with open(file_name, 'w', newline='',encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['num_digits', 'is_carry','num1', 'num2', 'sum'])
+        writer.writerow(['digits', 'num1', 'num2', 'sum','question','question_en'])
         for data in data_list:
             writer.writerow(data)
 
-# 如何产生连续进位的数据
-
-# 如何产生混合运算的数据
 
 
 if __name__ == "__main__":
     import os
     num_samples = 200
-    num_start = 1
+    num_start = 2
     num_end = 31
-    fdir = "./data/add_no_carry_data"
+    fdir = "./data/"
     os.makedirs(fdir, exist_ok=True)
-    file_name = os.path.join(fdir, f"add_no_carry_samples_{num_samples}_digits_{num_start}_{num_end}.csv")
+    file_name = os.path.join(fdir, f"sample_questions{num_samples}_addnocarry_digits{num_start}-{num_end-1}.csv")
     generate_add_no_carry_data(num_samples,num_start,num_end,file_name)
 
