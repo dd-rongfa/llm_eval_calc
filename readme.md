@@ -94,12 +94,13 @@ data_create.py
   ![ds-v3](result/eval_ds-v3_Batch_details_digits2-22_error_analysis.png) 
            超出了token阈值，被截断了，导致解析不到结果 \boxed{result} 
   ![ds-r1](result/eval_ds-r1_Batch_details_digits2-22_error_analysis.png) 
-           r1中还出现了，连续两位数顺序错误，order_2d
+           v3和r1中出现了，连续两位数顺序错误，order_2d，这在其他模型几乎没有。  
   ![doubaopro](result/eval_doubao-pro_Batch_details_digits2-22_error_analysis.png)
 
 - 过程验证发现 
    在ds-v3 和ds-r1的错误数据中发现了，中间过程中出现了正确答案，即其实际有计算正确过,却并未被采纳。
-   这个现象基本在本实验中的其他模型中几乎没有出现。 
+   这个现象基本在本实验中的其他模型中几乎没有出现。
+  
   ![ds-v3 and ds-r1](/result/process_correct_in_steps.PNG)
 
 ---------------
