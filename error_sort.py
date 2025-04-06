@@ -61,13 +61,17 @@ def diff_sort(row):
         else:
             return "value_nd"
 
+models = ["ds-r1-7b_Batch","ds-r1-32b_Batch","ds-v3_Batch","ds-r1_Batch","qwen2.5-ollama-q4","doubao-pro_Batch"]
 
-fp = "data/eval_ds-r1_Batch_details_digits2-22.csv"
+# fp = "data/eval_ds-r1_Batch_details_digits2-22.csv"
 #fp = 'data/eval_ds-r1-7b_Batch_details_digits2-22.csv'
 # fp =  'data/eval_ds-r1-32b_Batch_details_digits2-22.csv'
 # fp = 'data/eval_ds-v3_Batch_details_digits2-22.csv'
 # fp = 'data/eval_qwen2.5_details_digits2-22.csv'
 # fp = "data/eval_doubao-pro_Batch_details_digits2-22.csv"
+
+
+
 
 
 def error_sort(fp): 
@@ -123,10 +127,11 @@ def process_correct_in_steps(fp):
     df2['correct_in_steps_pct%'] = df2['correct_in_steps'] / df2['error'] * 100
     return df2
 
-df = error_sort(fp)
-# df.to_csv("data_ark/eval_ds-r1-7b_Batch_details_digits2-22_error_sort.csv",index=False)
 
-models = ["ds-r1-7b_Batch","ds-r1-32b_Batch","ds-v3_Batch","ds-r1_Batch","qwen2.5-ollama-q4","doubao-pro_Batch"]
+
+'''
+绘制错误类型图表
+'''
 
 def plot_error_analysis(df,model):
     for model in models:
@@ -153,12 +158,35 @@ def plot_error_analysis(df,model):
         print(f"Chart saved to: {output_path}")
 
 
+'''
+生成错误类型csv
+'''
+def error_sort_to_csv(fp): 
+    # if not exists, exit
+    if not os.path.exists(fp):
+        print(f"file {fp} not exists")
+        exit()
+    print(f"processing {fp}")
+    df = pd.read_csv(fp)
+    df['correct_in_steps'] = df.apply(correct_in_steps, axis=1)
 
+    # 只分析correct ==0 的行
+    df = df[df['correct'] == 0]
+    # Apply the diff_sort function and create new columns
+    df['error_type'] = df.apply(diff_sort, axis=1)
+    # Create 4 new columns for each error type
+    error_types = ['carry_1d', 'sub_1d', 'order_2d', 'value_nd']
+    for error_type in error_types:
+        df[error_type] = (df['error_type'] == error_type).astype(int)
+    return df
 
+# 生成错误类型csv
 for model in models:
-    fp = f"data_ark/eval_{model}_details_digits2-22.csv"
-    df = process_correct_in_steps(fp)
-    print(df)
+    fp = f"data/eval_{model}_details_digits2-22.csv"
+    df = error_sort_to_csv(fp)
+    df.to_csv(f"data_error_sort/eval_{model}_details_digits2-22_error_sort.csv",index=False)
+
+
 
 
 
