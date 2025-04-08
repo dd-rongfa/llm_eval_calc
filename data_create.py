@@ -63,7 +63,7 @@ def generate_add_no_carry_data(num_samples,num_start,num_end,file_name):
 
 if __name__ == "__main__":
     import os
-    num_samples = 200
+    num_samples = 10
     num_start = 2
     num_end = 31
     fdir = "./data/"
