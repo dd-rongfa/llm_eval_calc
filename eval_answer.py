@@ -7,7 +7,7 @@ import asyncio
 import json
 import tqdm
 
-from utils import chat_llm,async_chat_llm
+from utils import chat_llm_batch,async_chat_llm_batch
 
 # 提取boxed答案
 def extract_boxed_answer_int(text):
@@ -80,11 +80,12 @@ def eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,model_config
     评估答案
     mode: a 追加,只测漏检的 ，w 覆盖，重测所有
     '''
-    model = model_config['model']
+    model = model_config['model_name']
+    server = model_config['server']
     print(f"eval_answer_ollama {model} {start}-{end}")
     os.makedirs(data_dir, exist_ok=True)
-    summary_file = os.path.join(data_dir, f'eval_{model_config['model']}_summary_digits{start}-{end}.csv')
-    result_file = os.path.join(data_dir, f'eval_{model_config['model']}_details_digits{start}-{end}.csv')
+    summary_file = os.path.join(data_dir, f'eval_{server}_{model}_summary_digits{start}-{end}.csv')
+    result_file = os.path.join(data_dir, f'eval_{server}_{model}_details_digits{start}-{end}.csv')
     header = ['num_digits', 'num1', 'num2', 'sum',"answer_only",'diff','diff_str','correct','question','answer','reasoning','comment',]
     summary_header = ['num_digits', 'total_count','correct%','calc error%','parse_error%']
     write_result(summary_header,summary_file,mode='w')
@@ -119,7 +120,7 @@ def eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,model_config
     df = df[df.iloc[:,0].isin(num_digits_list)]
 
     # 遍历num_digits_list
-    for num_digits in tqdm.tqdm(num_digits_list,desc=f"eval {model} {start}-{end}"):
+    for num_digits in tqdm.tqdm(num_digits_list,desc=f"eval {server} {model} {start}-{end}"):
         df_num_digits = df[df.iloc[:,0] == num_digits]
         start_time = time.time()
         token_count=0
@@ -136,7 +137,7 @@ def eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,model_config
         results = []
         batch_size = 5
         for i in tqdm.tqdm(range(0,len(questions),batch_size), desc=f"Processing batches for {num_digits} digits", leave=False):
-            results.extend(chat_llm(questions[i:i+batch_size],model_config))
+            results.extend(chat_llm_batch(questions[i:i+batch_size],model_config))
         for index,result in enumerate(results):
             if result is None:
                 # print("网络异常")
@@ -177,11 +178,12 @@ async def async_eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,
     评估答案
     mode: a 追加,只测漏检的 ，w 覆盖，重测所有
     '''
-    model = model_config['model']
+    model = model_config['model_name']
+    server = model_config['server']
     print(f"eval_answer_ollama {model} {start}-{end}")
     os.makedirs(data_dir, exist_ok=True)
-    summary_file = os.path.join(data_dir, f'eval_{model_config['model']}_summary_digits{start}-{end}.csv')
-    result_file = os.path.join(data_dir, f'eval_{model_config['model']}_details_digits{start}-{end}.csv')
+    summary_file = os.path.join(data_dir, f'eval_{server}_{model}_summary_digits{start}-{end}.csv')
+    result_file = os.path.join(data_dir, f'eval_{server}_{model}_details_digits{start}-{end}.csv')
     header = ['num_digits', 'num1', 'num2', 'sum',"answer_only",'diff','diff_str','correct','question','answer','reasoning','comment',]
     summary_header = ['num_digits', 'total_count','correct%','calc error%','parse_error%']
     write_result(summary_header,summary_file,mode='w')
@@ -217,7 +219,7 @@ async def async_eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,
     df = df[df.iloc[:,0].isin(num_digits_list)]
 
     # 遍历num_digits_list
-    for num_digits in tqdm.tqdm(num_digits_list,desc=f"eval {model} {start}-{end}"):
+    for num_digits in tqdm.tqdm(num_digits_list,desc=f"eval {server} {model} {start}-{end}"):
         df_num_digits = df[df.iloc[:,0] == num_digits]
         start_time = time.time()
         token_count=0
@@ -234,7 +236,7 @@ async def async_eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,
         results = []
         batch_size = 5
         for i in tqdm.tqdm(range(0,len(questions),batch_size), desc=f"Processing batches for {num_digits} digits", leave=False):
-            results.extend(await async_chat_llm(questions[i:i+batch_size],model_config))
+            results.extend(await async_chat_llm_batch(questions[i:i+batch_size],model_config))
         for index,result in enumerate(results):
             if result is None:
                 # print("网络异常")
@@ -271,7 +273,7 @@ async def async_eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,
 
 if __name__ == "__main__":
     sample_file = os.path.join('data', "sample_questions10_addnocarry_digits2-30.csv")
-    model_config = {
+    config = {
         'server': 'deepseek',
         "model_name": "ds-v3",
         "timeout": 3000,
@@ -282,6 +284,6 @@ if __name__ == "__main__":
     ## test ok
     # asyncio.run(async_eval_answers(data_dir="./data_test/",sample_file=sample_file,model_config=model_config,mode='w'))
     ## test ok
-    eval_answers(data_dir="./data_test/",sample_file=sample_file,start=10,end=22 ,model_config=model_config)
+    eval_answers(data_dir="./data_test/",sample_file=sample_file,start=2,end=42 ,model_config=config)
 
 
