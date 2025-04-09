@@ -106,7 +106,7 @@ def eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,model_config
     
     previous_num_digits = []
     if mode == 'a':
-        # 追加测试，之前每测试完的，丢失的，补测
+        # 追加测试，之前没测试完的，丢失的，补测
         # 获取之前测试过的num_digits
         with open(result_file, 'r', newline='', encoding='utf-8') as f:
             reader = csv.reader(f)
@@ -138,6 +138,9 @@ def eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,model_config
         for i in tqdm.tqdm(range(0,len(questions),batch_size), desc=f"Processing batches for {num_digits} digits", leave=False):
             results.extend(chat_llm(questions[i:i+batch_size],model_config))
         for index,result in enumerate(results):
+            if result is None:
+                # print("网络异常")
+                continue
             num_digits,num1,num2,num_sum,question,question_en = df_num_digits.iloc[index]
             result_raw = result.get('content','')
             reasoning = result.get('reasoning_content','')
@@ -201,7 +204,7 @@ async def async_eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,
     
     previous_num_digits = []
     if mode == 'a':
-        # 追加测试，之前每测试完的，丢失的，补测
+        # 追加测试，之前没测试完的，丢失的，补测
         # 获取之前测试过的num_digits
         with open(result_file, 'r', newline='', encoding='utf-8') as f:
             reader = csv.reader(f)
@@ -233,6 +236,9 @@ async def async_eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,
         for i in tqdm.tqdm(range(0,len(questions),batch_size), desc=f"Processing batches for {num_digits} digits", leave=False):
             results.extend(await async_chat_llm(questions[i:i+batch_size],model_config))
         for index,result in enumerate(results):
+            if result is None:
+                # print("网络异常")
+                continue
             num_digits,num1,num2,num_sum,question,question_en = df_num_digits.iloc[index]
             result_raw = result.get('content','')
             reasoning = result.get('reasoning_content','')
@@ -266,16 +272,16 @@ async def async_eval_answers(data_dir,sample_file,start=2,end=22,only_even=True,
 if __name__ == "__main__":
     sample_file = os.path.join('data', "sample_questions10_addnocarry_digits2-30.csv")
     model_config = {
-        'server': 'ark',
-        "model": "ds-r1-7b_Batch",
+        'server': 'deepseek',
+        "model_name": "ds-v3",
         "timeout": 3000,
         "temperature": 0.6,
-        'max_tokens': 8000,
+        'max_tokens': 8192,
 
     }   
     ## test ok
-    asyncio.run(async_eval_answers(data_dir="./data_test/",sample_file=sample_file,model_config=model_config,mode='w'))
+    # asyncio.run(async_eval_answers(data_dir="./data_test/",sample_file=sample_file,model_config=model_config,mode='w'))
     ## test ok
-    # eval_answers(data_dir="./data_test/",sample_file=sample_file,start=2,end=8 ,model_config=model_config)
+    eval_answers(data_dir="./data_test/",sample_file=sample_file,start=10,end=22 ,model_config=model_config)
 
 
